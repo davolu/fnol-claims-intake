@@ -1,0 +1,12 @@
+.venv
+**/node_modules
+**/.next
+**/__pycache__
+.env
+.env.*
+!.env.example
+data
+logs
+pgdata
+samples/eval/results
+*.db

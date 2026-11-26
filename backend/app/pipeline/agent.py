@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import date
 from difflib import SequenceMatcher
@@ -119,6 +120,16 @@ def quote_found(quote: str | None, source: str) -> float:
     return round(best, 3)
 
 
+def _as_dict(v: Any) -> dict[str, Any]:
+    """Models occasionally return a nested object as a JSON string; accept both."""
+    if isinstance(v, str):
+        try:
+            v = json.loads(v)
+        except json.JSONDecodeError:
+            return {}
+    return v if isinstance(v, dict) else {}
+
+
 def coerce_fields(raw: dict[str, Any]) -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
     for name in FIELD_SPECS:
@@ -206,12 +217,7 @@ def extract(
         SYSTEM.replace("{today}", date.today().isoformat()), user, _tool_specs(db), "submit_extraction", max_steps
     )
     fi = res.final_input
-    fields_raw = fi.get("fields") or {}
-    if isinstance(fields_raw, str):  # some models stringify nested JSON
-        import json
-
-        fields_raw = json.loads(fields_raw)
-    fields = coerce_fields(fields_raw)
+    fields = coerce_fields(_as_dict(fi.get("fields")))
     kind = fi.get("document_kind") or "fnol"
     kconf = float(fi.get("document_kind_confidence") or 0.0)
     return kind, kconf, fields, res
@@ -256,7 +262,7 @@ def self_check(
         "submit_verification",
         1,
     )
-    got = res.final_input.get("fields") or {}
+    got = _as_dict(res.final_input.get("fields"))
     changes = []
     for k in low:
         v = got.get(k)

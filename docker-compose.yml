@@ -1,0 +1,53 @@
+# Local stack: docker compose up --build   ->  UI http://localhost:3000
+# Secrets come from .env (copy .env.example). Never commit .env.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: fnol
+      POSTGRES_PASSWORD: fnol
+      POSTGRES_DB: fnol
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fnol"]
+      interval: 3s
+      retries: 20
+
+  api:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://fnol:fnol@postgres:5432/fnol
+      MOCK_CLAIMCENTER_URL: http://mock-claimcenter:8090
+      STORAGE_DIR: /data/uploads
+    volumes: [uploads:/data/uploads]
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports: ["8000:8000"]
+
+  worker:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    command: ["python", "-m", "app.worker"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://fnol:fnol@postgres:5432/fnol
+      MOCK_CLAIMCENTER_URL: http://mock-claimcenter:8090
+      STORAGE_DIR: /data/uploads
+    volumes: [uploads:/data/uploads]
+    depends_on: [api]
+
+  web:
+    build: { context: ., dockerfile: web/Dockerfile }
+    environment:
+      API_URL: http://api:8000
+      APP_API_TOKEN: ${APP_API_TOKEN}
+    depends_on: [api]
+    ports: ["3000:3000"]
+
+  mock-claimcenter:
+    build: { context: ., dockerfile: mock_claimcenter/Dockerfile }
+    ports: ["8090:8090"]
+
+volumes:
+  pgdata:
+  uploads:

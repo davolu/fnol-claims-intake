@@ -83,6 +83,8 @@ def run_evals(
     has_integ = True  # evals score the decision as if a claims system were connected
     cases = []
     total_usage = Usage(model=model, provider=provider)
+    if not labels:
+        raise ValueError(f"No eval cases match {only}")
     for lab in labels:
         data = (EVAL_DIR / "files" / lab["file"]).read_bytes()
         t0 = time.perf_counter()

@@ -15,3 +15,6 @@ data/
 web/out/
 pgdata/
 storage/
+logs/
+web/tsconfig.tsbuildinfo
+web/next-env.d.ts

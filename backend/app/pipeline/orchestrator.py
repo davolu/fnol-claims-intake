@@ -31,9 +31,10 @@ def decide(
         reasons.append({"code": "not_fnol", "message": f"Agent classified this as '{kind}'"})
     elif kind_conf < thr:
         reasons.append({"code": "kind_uncertain", "message": f"Unsure this is an FNOL ({kind_conf:.2f})"})
+    blocking = set(cfg.get("blocking_fields") or REQUIRED_FIELDS)
     for k, f in fields.items():
         present = f.get("value") not in (None, "", [])
-        if (k in REQUIRED_FIELDS or present) and f.get("confidence", 0) < thr:
+        if k in blocking and (k in REQUIRED_FIELDS or present) and f.get("confidence", 0) < thr:
             reasons.append(
                 {
                     "code": "low_confidence",

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from .config import get_settings
 from .models import AppSetting
+from .schemas import REQUIRED_FIELDS
 
 EDITABLE = {
     "llm_provider": str,
@@ -18,6 +19,8 @@ EDITABLE = {
     "max_auto_push_amount": float,
     "max_loss_age_days": int,
     "review_if_injuries": bool,
+    "date_order": str,
+    "blocking_fields": list,
 }
 
 
@@ -32,6 +35,10 @@ def defaults() -> dict[str, Any]:
         "max_auto_push_amount": 25000.0,
         "max_loss_age_days": 365,
         "review_if_injuries": True,
+        # How the carrier's forms write dates; an extraction that contradicts this reading goes to review.
+        "date_order": "month_first",
+        # Fields that must clear the confidence threshold before a claim may be sent automatically.
+        "blocking_fields": [*REQUIRED_FIELDS, "estimated_amount", "line_items", "other_parties"],
     }
 
 
@@ -48,6 +55,8 @@ def update_runtime(db: Session, changes: dict[str, Any]) -> dict[str, Any]:
         if k not in EDITABLE or v is None:
             continue
         v = EDITABLE[k](v)
+        if k == "date_order" and v not in ("month_first", "day_first"):
+            raise ValueError("date_order must be month_first or day_first")
         row = db.get(AppSetting, k)
         if row:
             row.value = v

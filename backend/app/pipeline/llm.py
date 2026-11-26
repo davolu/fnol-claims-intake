@@ -23,6 +23,9 @@ PRICING: dict[str, tuple[float, float]] = {
     "claude-sonnet-4-5-20250929": (3.0, 15.0),
     "claude-haiku-4-5-20251001": (1.0, 5.0),
     "claude-opus-5-5": (4.0, 20.0),
+    "gpt-5.4-mini": (0.75, 4.50),
+    "gpt-5.4-nano": (0.20, 1.25),
+    "gpt-5.4": (2.50, 15.0),
 }
 
 
@@ -182,9 +185,11 @@ class OpenAICompatProvider:
         for step in range(max_steps):
             force = step == max_steps - 1 or len(tools) == 1
             t0 = time.perf_counter()
+            # Reasoning-family models (gpt-5*, o*) reject a temperature setting.
+            extra: dict[str, Any] = {} if self.model.startswith(("gpt-5", "o")) else {"temperature": 0}
             resp = self.client.chat.completions.create(
                 model=self.model,
-                temperature=0,
+                **extra,
                 messages=messages,
                 tools=api_tools,
                 tool_choice={"type": "function", "function": {"name": final_tool}} if force else "required",

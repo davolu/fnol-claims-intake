@@ -115,3 +115,19 @@ def test_decide_routes_low_confidence_and_rules(db):
     )
     assert decide(F(), [], "not_claim", 0.99, cfg, True)[0] == "review"
     assert decide(F(), [], "fnol", 0.99, cfg, False)[1][0]["code"] == "no_integration"
+
+
+def test_ambiguous_date_conflicting_with_carrier_locale(db):
+    f = F(loss_date="2026-11-03")
+    f["loss_date"]["source"] = "03/11/2026"
+    rules = {i["rule"] for i in validate(db, f, defaults(), TODAY)}
+    assert "loss_date_ambiguous" in rules
+    f = F(loss_date="2026-03-11")
+    f["loss_date"]["source"] = "03/11/2026"
+    assert "loss_date_ambiguous" not in {i["rule"] for i in validate(db, f, defaults(), TODAY)}
+
+
+def test_optional_low_confidence_field_does_not_block(db):
+    f = F(vehicle_or_property="2023 Mazda ???")
+    f["vehicle_or_property"]["confidence"] = 0.3
+    assert decide(f, [], "fnol", 0.99, defaults(), True)[0] == "auto_push"

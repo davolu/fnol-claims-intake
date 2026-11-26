@@ -103,6 +103,21 @@ def validate(db: Session, fields: dict[str, Any], cfg: dict[str, Any], today: da
                 )
 
     if loss_d:
+        quote = (fields.get("loss_date") or {}).get("source") or ""
+        parsed = T.parse_date(quote, today) if quote else {}
+        if parsed.get("ambiguous"):
+            order = cfg.get("date_order", "month_first")
+            expected = parsed["alternatives"][order]
+            if expected != loss_d.isoformat():
+                issues.append(
+                    _issue(
+                        "loss_date_ambiguous",
+                        f"Loss date written as '{quote.strip()}' reads as {expected} on this carrier's "
+                        f"{order.replace('_', '-')} forms, but {loss_d.isoformat()} was extracted. "
+                        "Confirm with the reporter.",
+                        "loss_date",
+                    )
+                )
         if loss_d > today:
             issues.append(_issue("loss_date_not_future", "Loss date is in the future", "loss_date"))
         elif (today - loss_d).days > int(cfg.get("max_loss_age_days", 365)):
