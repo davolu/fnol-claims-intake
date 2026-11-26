@@ -131,3 +131,14 @@ def test_optional_low_confidence_field_does_not_block(db):
     f = F(vehicle_or_property="2023 Mazda ???")
     f["vehicle_or_property"]["confidence"] = 0.3
     assert decide(f, [], "fnol", 0.99, defaults(), True)[0] == "auto_push"
+
+
+def test_unknown_party_role_is_mapped_to_other_with_a_note():
+    from app.pipeline.agent import coerce_fields
+
+    raw = {
+        "other_parties": {"value": [{"name": "J", "role": "agent"}, {"name": "K", "role": "driver"}], "confidence": 0.9}
+    }
+    f = coerce_fields(raw)["other_parties"]
+    assert [p["role"] for p in f["value"]] == ["other", "driver"]
+    assert "agent" in f["notes"][0]

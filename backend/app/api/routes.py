@@ -226,6 +226,11 @@ def reprocess(claim_id: str, db: Session = Depends(get_db), user: User = Depends
     if c.status in ("pushed", "pushing", "processing"):
         raise HTTPException(409, f"Claim is {c.status}")
     c.status = "queued"
+    # Cancel any retry of an earlier run still waiting in the queue, so one claim is never processed twice.
+    for old in db.scalars(select(Job).where(Job.kind == "process_claim", Job.status == "queued")):
+        if (old.payload or {}).get("claim_id") == c.id:
+            old.status = "cancelled"
+            old.last_error = "superseded by reprocess request"
     n = db.scalar(select(func.count()).select_from(Job).where(Job.kind == "process_claim")) or 0
     enqueue(db, "process_claim", {"claim_id": c.id}, dedupe_key=f"process:{c.id}:{n + 1}")
     audit.record(db, "reprocess_requested", claim_id=c.id, actor=user.actor)

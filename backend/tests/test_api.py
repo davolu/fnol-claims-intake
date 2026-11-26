@@ -142,3 +142,40 @@ def test_settings_and_integration_secret_never_returned(client):
     assert r["has_secret"] is True and "topsecret" not in str(r)
     assert client.put("/api/settings", headers=AUD, json={"auto_push": False}).status_code == 403
     assert client.put("/api/settings", headers=SUP, json={"auto_push": False}).json()["settings"]["auto_push"] is False
+
+
+def test_reprocess_does_not_double_process_when_a_retry_is_pending(client, mock_cc, monkeypatch):
+    """Regression: a failed claim has a retry waiting in the queue; clicking Re-run must not leave two runs."""
+    calls = {"n": 0}
+
+    def flaky(p, m):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("provider down")
+        return FakeLLM(
+            {"estimated_amount": (3700.0, "$2,700.00")}
+        )  # lands in review, so the push guard can't mask a rerun
+
+    monkeypatch.setattr(agent, "get_provider", flaky)
+    _activate(client)
+    data = (SAMPLES / "c01_auto_typed_pdf.pdf").read_bytes()
+    cid = client.post("/api/documents", headers=SUP, files=[("files", ("c01.pdf", data, "application/pdf"))]).json()[
+        "results"
+    ][0]["claim_id"]
+    _drain()  # first run fails, retry is queued in the future
+    assert client.get(f"/api/claims/{cid}", headers=SUP).json()["status"] == "failed"
+    assert client.post(f"/api/claims/{cid}/reprocess", headers=SUP).status_code == 200
+    _drain()
+    from datetime import UTC, datetime, timedelta
+
+    from app.db import SessionLocal
+    from app.models import Job
+
+    with SessionLocal() as db:  # fast-forward: any surviving retry would now be due
+        for j in db.query(Job).filter(Job.status == "queued"):
+            j.run_after = datetime.now(UTC) - timedelta(seconds=1)
+        db.commit()
+    _drain()
+    d = client.get(f"/api/claims/{cid}", headers=SUP).json()
+    assert d["status"] == "needs_review"
+    assert [e["event_type"] for e in d["events"]].count("decision") == 1

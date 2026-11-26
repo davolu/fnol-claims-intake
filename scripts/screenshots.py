@@ -3,7 +3,10 @@ import time
 from playwright.sync_api import sync_playwright
 
 WEB, MOCK, OUT = "http://localhost:3100", "http://localhost:8090", "/workspace/fnol-claims-intake-shots"
-PUSHED, FAILED = "9efd299551874774ba3fbdcaad728008", "150c74ff44554cf9892a7289e42b0d8e"
+import json
+
+IDS = json.load(open("logs/e2e_result.json"))["ids"]
+PUSHED, REVIEW, EDITED = IDS["c01_auto_typed_pdf"], IDS["c07_glass_ambiguous_date"], IDS["c04_fire_items_mismatch"]
 
 
 def shot(page, name, url=None, click=None, wait=1500):
@@ -31,7 +34,9 @@ with sync_playwright() as p:
             shot(page, "05_claim_fields", WEB + f"/claims/{PUSHED}", wait=2500)
             shot(page, "06_claim_trace_audit", click="Agent trace")
             shot(page, "07_claim_payload", click="Claims-system payload")
-            shot(page, "08_claim_failed_provider_error", WEB + f"/claims/{FAILED}", wait=2500)
+            shot(page, "08_review_claim_ambiguous_date", WEB + f"/claims/{REVIEW}", wait=2500)
+            shot(page, "08b_review_claim_edited_and_approved_trace", WEB + f"/claims/{EDITED}", wait=2500)
+            shot(page, "08c_edited_claim_audit_trail", click="Agent trace")
             shot(page, "09_settings_claims_system", WEB + "/settings")
             shot(page, "10_settings_email_intake", click="Email intake")
             shot(page, "11_settings_ai_rules", click="AI & rules")

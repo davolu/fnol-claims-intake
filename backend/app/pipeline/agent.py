@@ -130,6 +130,21 @@ def _as_dict(v: Any) -> dict[str, Any]:
     return v if isinstance(v, dict) else {}
 
 
+_ROLES = {"insured", "claimant", "third_party", "witness", "driver", "other"}
+
+
+def _coerce_roles(parties: list[Any]) -> tuple[list[Any], list[str]]:
+    """The model sometimes invents a role (e.g. 'agent'): map it to 'other' and note it instead of failing."""
+    notes: list[str] = []
+    fixed: list[Any] = []
+    for p in parties:
+        if isinstance(p, dict) and p.get("role") not in _ROLES:
+            notes.append(f"role '{p.get('role')}' for {p.get('name')} is not a known role; stored as 'other'")
+            p = {**p, "role": "other"}
+        fixed.append(p)
+    return fixed, notes
+
+
 def coerce_fields(raw: dict[str, Any]) -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
     for name in FIELD_SPECS:
@@ -140,12 +155,16 @@ def coerce_fields(raw: dict[str, Any]) -> dict[str, dict[str, Any]]:
             conf = float(f.get("confidence") or 0)
         except (TypeError, ValueError):
             conf = 0.0
+        value = f.get("value")
+        notes: list[str] = []
+        if name == "other_parties" and isinstance(value, list):
+            value, notes = _coerce_roles(value)
         out[name] = {
-            "value": f.get("value"),
+            "value": value,
             "confidence": max(0.0, min(1.0, conf)),
             "source": f.get("source"),
             "method": "llm",
-            "notes": [],
+            "notes": notes,
         }
     return out
 

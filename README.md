@@ -105,6 +105,21 @@ an email with a TIFF attachment, and deliberately bad cases (expired policy, unk
 high value, injury, ambiguous date, not-a-claim). It scores 11 fields per claim, the document type, the
 auto-send vs review decision, and lists **unsafe auto-sends** (claims sent that should have gone to a person).
 
+### Measured results (real runs, `claude-haiku-5-5`, 14 labelled SAMPLE notices)
+
+| | First run | After ambiguous-date + blocking-field + role fixes |
+|---|---|---|
+| Field accuracy (11 fields x 13 claims) | 99.3% | 100% |
+| Send-or-review decision correct | 78.6% (11/14) | 100% (14/14) |
+| Unsafe auto-sends | 1 (ambiguous date) | 0 |
+| Cost for the whole set | $0.0275 | $0.0283 |
+| Average time per claim | 7.2 s | 7.7 s |
+
+Per claim: about $0.002 and 5-11 s. In a separate fresh-database run through the API, 14 uploads gave 7 automatic
+sends and 7 held for review; one held claim was edited and approved by an adjuster and pushed to the stand-in.
+The set is small and written by us, and the model is not deterministic (one case flipped between runs before the
+role fix), so treat these as a smoke-level benchmark; add the client's own labelled claims before relying on them.
+
 ## Environment variables
 
 See `.env.example`. Key ones: `DATABASE_URL`, `APP_API_TOKEN`, `FNOL_SECRETS_KEY`, `LLM_PROVIDER`, `LLM_MODEL`,
