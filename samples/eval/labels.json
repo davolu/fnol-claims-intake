@@ -275,5 +275,53 @@
     },
     "expect_kind": "fnol",
     "expect_decision": "auto_push"
+  },
+  {
+    "id": "c15_auto_email_full_narrative",
+    "file": "c15_auto_email_full_narrative.eml",
+    "format": "email",
+    "expect": {
+      "policy_number": "PA-20481736",
+      "line_of_business": "auto",
+      "loss_date": "2026-11-14",
+      "loss_time": "17:40",
+      "loss_cause": "auto_collision",
+      "insured_name": "Maria Okafor",
+      "reporter_name": "Maria Okafor",
+      "other_parties": [
+        "Kevin Lowe"
+      ],
+      "police_report_number": "SPD-26-114502",
+      "injuries": false,
+      "estimated_amount": 2700.0,
+      "insured_phone": "(217) 555-0148",
+      "loss_location": "Elm Ave and 5th St, Springfield, IL"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
+  },
+  {
+    "id": "c16_email_third_party_and_amount",
+    "file": "c16_email_third_party_and_amount.eml",
+    "format": "email",
+    "expect": {
+      "policy_number": "PA-60718342",
+      "line_of_business": "auto",
+      "loss_date": "2026-11-20",
+      "loss_time": "16:10",
+      "loss_cause": "auto_collision",
+      "insured_name": "Grace Mensah",
+      "reporter_name": "Grace Mensah",
+      "other_parties": [
+        "Dana Okonkwo"
+      ],
+      "police_report_number": "SPD-26-220118",
+      "injuries": false,
+      "estimated_amount": 2250.0,
+      "insured_phone": "(217) 555-0166",
+      "loss_location": "Westfield Mall parking lot, Springfield IL"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
   }
 ]

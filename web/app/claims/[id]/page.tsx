@@ -124,7 +124,7 @@ export default function ClaimPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {c.status === "push_failed" ? <Button onClick={retry} disabled={busy}><RefreshCw size={13} />Retry send</Button> : null}
-          {["needs_review", "failed", "rejected"].includes(c.status) && !c.pii_masked ? <Button onClick={reprocess} disabled={busy}><Bot size={13} />Re-run AI</Button> : null}
+          {["needs_review", "failed", "rejected", "pushed", "push_failed"].includes(c.status) && !c.pii_masked ? <Button variant="secondary" onClick={reprocess} disabled={busy}><Bot size={13} />{c.external_claim_number ? "Refresh extraction" : "Re-run AI"}</Button> : null}
           {editable && dirty ? <Button onClick={save} disabled={busy}><Save size={13} />Save edits</Button> : null}
           {editable && c.status !== "approved" ? <Button variant="destructive" onClick={reject} disabled={busy}><Ban size={13} />Reject</Button> : null}
           {editable && c.status !== "approved" ? <Button variant="default" onClick={approve} disabled={busy}><Check size={13} />Approve &amp; send to claims system</Button> : null}

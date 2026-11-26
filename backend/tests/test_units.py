@@ -142,3 +142,76 @@ def test_unknown_party_role_is_mapped_to_other_with_a_note():
     f = coerce_fields(raw)["other_parties"]
     assert [p["role"] for p in f["value"]] == ["other", "driver"]
     assert "agent" in f["notes"][0]
+
+
+def test_source_hints_find_facts_in_a_free_text_email():
+    from app.pipeline import hints as H
+
+    body = (
+        "Hi, I'm reporting a car accident. Policy PA-20481736, insured Maria Okafor. "
+        "On 11/14/2026 at about 17:40 at Elm Ave and 5th St, Springfield, IL, I was "
+        "stopped at a red light and Kevin Lowe (Bluegate Auto) hit my rear bumper. "
+        "Police report SPD-26-114502. No injuries. Estimate: rear bumper $1,450, "
+        "trunk lid $820, paint and labour $430 – total $2,700. Reported by Maria "
+        "Okafor, (217) 555-0148."
+    )
+    h = H.source_hints(body, known_names=["Maria Okafor"])
+    assert {x["amount"] for x in h["estimated_amount"]} >= {1450.0, 820.0, 430.0, 2700.0}
+    assert any(x["value"] == "17:40" for x in h["loss_time"])
+    assert any("555-0148" in x["value"] for x in h["insured_phone"])
+    assert any(x["value"] == "SPD-26-114502" for x in h["police_report_number"])
+    assert any(x["name"] == "Kevin Lowe" and x["org"] == "Bluegate Auto" for x in h["other_parties"])
+    empty = {
+        k: {"value": None, "confidence": 0.0}
+        for k in ("estimated_amount", "other_parties", "loss_time", "police_report_number", "insured_phone")
+    }
+    empty["insured_name"] = {"value": "Maria Okafor", "confidence": 0.9}
+    empty["reporter_name"] = {"value": "Maria Okafor", "confidence": 0.9}
+    names = [n for n, _ in H.unfilled_mention_fields(empty, body)]
+    assert "estimated_amount" in names and "other_parties" in names
+    assert "loss_time" in names and "police_report_number" in names and "insured_phone" in names
+    rec = H.fields_to_recheck(empty, body, 0.85, ["policy_number"])
+    assert "estimated_amount" in rec and "other_parties" in rec
+
+
+def test_unfilled_mention_guardrail_routes_to_review(db):
+    body = (
+        "Kevin Lowe (Bluegate Auto) hit my bumper. Estimate total $2,700. "
+        "Reported by Maria Okafor."
+    )
+    f = F(estimated_amount=None, other_parties=None, insured_name="Maria Okafor")
+    cfg = defaults()
+    assert cfg["review_if_unfilled_mentions"] is True
+    rules = {i["rule"] for i in validate(db, f, cfg, TODAY, source_text=body)}
+    assert "unfilled_amount_in_source" in rules
+    assert "unfilled_party_in_source" in rules
+    cfg = {**cfg, "review_if_unfilled_mentions": False}
+    rules = {i["rule"] for i in validate(db, f, cfg, TODAY, source_text=body)}
+    assert "unfilled_amount_in_source" not in rules
+    assert "unfilled_party_in_source" not in rules
+
+
+def test_email_sender_and_insured_are_not_kept_as_other_parties():
+    from app.pipeline import hints as H
+
+    src = (
+        "EMAIL\nFrom: David Oluyale <sender@example.com>\nSubject: FNOL\n\n"
+        "Insured Maria Okafor. Kevin Lowe (Bluegate Auto) hit my rear bumper."
+    )
+    assert H.names_from_headers(src) == ["David Oluyale"]
+    fields = {
+        "insured_name": {"value": "Maria Okafor", "confidence": 0.9, "notes": []},
+        "reporter_name": {"value": "Maria Okafor", "confidence": 0.9, "notes": []},
+        "other_parties": {
+            "value": [
+                {"name": "Kevin Lowe", "role": "driver", "insurer": "Bluegate Auto"},
+                {"name": "David Oluyale", "role": "third_party"},
+                {"name": "Maria Okafor", "role": "insured"},
+            ],
+            "confidence": 0.7,
+            "notes": [],
+        },
+    }
+    dropped = H.drop_self_parties(fields, src)
+    assert "David Oluyale" in dropped and "Maria Okafor" in dropped
+    assert [p["name"] for p in fields["other_parties"]["value"]] == ["Kevin Lowe"]

@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from ..schemas import FIELD_SPECS, REQUIRED_FIELDS, Party
+from . import hints as H
 from . import tools as T
 
 
@@ -21,7 +22,13 @@ def _issue(rule: str, message: str, field: str | None = None, severity: str = "e
     return {"rule": rule, "field": field, "severity": severity, "message": message}
 
 
-def validate(db: Session, fields: dict[str, Any], cfg: dict[str, Any], today: date | None = None) -> list[dict]:
+def validate(
+    db: Session,
+    fields: dict[str, Any],
+    cfg: dict[str, Any],
+    today: date | None = None,
+    source_text: str = "",
+) -> list[dict]:
     today = today or date.today()
     issues: list[dict[str, Any]] = []
 
@@ -157,5 +164,31 @@ def validate(db: Session, fields: dict[str, Any], cfg: dict[str, Any], today: da
 
     if cfg.get("review_if_injuries", True) and _v(fields, "injuries") is True:
         issues.append(_issue("injury_review", "Bodily injury reported: adjuster review required", "injuries"))
+
+    if cfg.get("review_if_unfilled_mentions", True) and source_text:
+        mention_fields = cfg.get("mention_guard_fields") or ["estimated_amount", "other_parties"]
+        for name, hits in H.unfilled_mention_fields(fields, source_text):
+            if name not in mention_fields:
+                continue
+            quotes = "; ".join({(h.get("quote") or h.get("value") or h.get("name") or "")[:80] for h in hits})
+            if name == "estimated_amount":
+                issues.append(
+                    _issue(
+                        "unfilled_amount_in_source",
+                        "The source mentions an amount "
+                        f"({quotes}) but estimated_amount was left empty. Confirm the total before sending.",
+                        "estimated_amount",
+                    )
+                )
+            elif name == "other_parties":
+                names = ", ".join(sorted({h.get("name") or "" for h in hits if h.get("name")}))
+                issues.append(
+                    _issue(
+                        "unfilled_party_in_source",
+                        f"The source names another party ({names}) but other_parties was left empty. "
+                        "Confirm who was involved before sending.",
+                        "other_parties",
+                    )
+                )
 
     return issues

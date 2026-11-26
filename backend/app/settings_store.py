@@ -21,6 +21,8 @@ EDITABLE = {
     "review_if_injuries": bool,
     "date_order": str,
     "blocking_fields": list,
+    "review_if_unfilled_mentions": bool,
+    "mention_guard_fields": list,
 }
 
 
@@ -39,6 +41,9 @@ def defaults() -> dict[str, Any]:
         "date_order": "month_first",
         # Fields that must clear the confidence threshold before a claim may be sent automatically.
         "blocking_fields": [*REQUIRED_FIELDS, "estimated_amount", "line_items", "other_parties"],
+        # If the source mentions an amount or another party but the field was left empty, hold for review.
+        "review_if_unfilled_mentions": True,
+        "mention_guard_fields": ["estimated_amount", "other_parties"],
     }
 
 

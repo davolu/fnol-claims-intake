@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..models import EvalRun
 from ..pipeline import agent
+from ..pipeline import hints as H
 from ..pipeline.llm import Usage
 from ..pipeline.orchestrator import decide
 from ..pipeline.router import route_and_read
@@ -31,9 +32,11 @@ SCORED = [
     "policy_number",
     "line_of_business",
     "loss_date",
+    "loss_time",
     "loss_cause",
     "loss_location",
     "insured_name",
+    "insured_phone",
     "reporter_name",
     "other_parties",
     "police_report_number",
@@ -102,14 +105,10 @@ def run_evals(
         before = {k: v["value"] for k, v in fields.items()}
         agent.ground(fields, src.source_text)
         thr = float(cfg["confidence_threshold"])
-        low = [
-            k
-            for k, f in fields.items()
-            if f["confidence"] < thr and (k in REQUIRED_FIELDS or f["value"] not in (None, "", []))
-        ]
+        low = H.fields_to_recheck(fields, src.source_text, thr, REQUIRED_FIELDS)
         _, sc_usage = agent.self_check(src.source_text, fields, low, provider, model)
         usage.add(sc_usage)
-        issues = validate(db, fields, cfg)
+        issues = validate(db, fields, cfg, source_text=src.source_text)
         decision, reasons = decide(fields, issues, kind, kconf, cfg, has_integ)
         elapsed = time.perf_counter() - t0
         total_usage.add(usage)
@@ -117,7 +116,9 @@ def run_evals(
         per_field_first_pass = {}
         if lab["expect_kind"] == "fnol":
             for k in SCORED:
-                want = lab["expect"].get(k)
+                if k not in lab["expect"]:
+                    continue  # optional field not labelled for this case
+                want = lab["expect"][k]
                 per_field[k] = field_correct(k, fields[k]["value"], want)
                 per_field_first_pass[k] = field_correct(k, before[k], want)
         cases.append(
@@ -150,10 +151,13 @@ def run_evals(
         )
 
     scored = [c for c in cases if c["fields_ok"]]
-    field_acc = {k: round(sum(c["fields_ok"][k] for c in scored) / len(scored), 3) for k in SCORED} if scored else {}
-    first_acc = (
-        {k: round(sum(c["fields_ok_first_pass"][k] for c in scored) / len(scored), 3) for k in SCORED} if scored else {}
-    )
+
+    def _acc(bucket: str, key: str) -> float | None:
+        xs = [c[bucket][key] for c in scored if key in c[bucket]]
+        return round(sum(xs) / len(xs), 3) if xs else None
+
+    field_acc = {k: a for k in SCORED if (a := _acc("fields_ok", k)) is not None}
+    first_acc = {k: a for k in SCORED if (a := _acc("fields_ok_first_pass", k)) is not None}
     n_fields = sum(len(c["fields_ok"]) for c in scored)
     auto = [c for c in cases if c["decision"] == "auto_push"]
     summary = {

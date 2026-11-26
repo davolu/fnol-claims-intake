@@ -223,17 +223,30 @@ def reprocess(claim_id: str, db: Session = Depends(get_db), user: User = Depends
     c = db.get(Claim, claim_id)
     if not c:
         raise HTTPException(404, "Claim not found")
-    if c.status in ("pushed", "pushing", "processing"):
+    if c.status in ("pushing", "processing"):
         raise HTTPException(409, f"Claim is {c.status}")
-    c.status = "queued"
+    already_sent = c.status == "pushed" or bool(c.external_claim_number)
+    if not already_sent:
+        c.status = "queued"
     # Cancel any retry of an earlier run still waiting in the queue, so one claim is never processed twice.
     for old in db.scalars(select(Job).where(Job.kind == "process_claim", Job.status == "queued")):
         if (old.payload or {}).get("claim_id") == c.id:
             old.status = "cancelled"
             old.last_error = "superseded by reprocess request"
     n = db.scalar(select(func.count()).select_from(Job).where(Job.kind == "process_claim")) or 0
-    enqueue(db, "process_claim", {"claim_id": c.id}, dedupe_key=f"process:{c.id}:{n + 1}")
-    audit.record(db, "reprocess_requested", claim_id=c.id, actor=user.actor)
+    enqueue(
+        db,
+        "process_claim",
+        {"claim_id": c.id, "refresh": already_sent},
+        dedupe_key=f"{'refresh' if already_sent else 'process'}:{c.id}:{n + 1}",
+    )
+    audit.record(
+        db,
+        "reprocess_requested",
+        claim_id=c.id,
+        actor=user.actor,
+        details={"refresh_only": already_sent, "external_claim_number": c.external_claim_number},
+    )
     db.commit()
     return claim_detail(c, user)
 

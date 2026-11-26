@@ -8,7 +8,7 @@ import { when } from "@/lib/format";
 type CatalogItem = { kind: string; label: string; auth_modes?: string[]; notes: string; verified_against?: string; fields?: string[]; secret?: string };
 type Integration = { id: string; kind: string; name: string; base_url: string; auth_mode: string; token_url: string | null; client_id: string | null; scopes: string | null; options: Record<string, unknown>; has_secret: boolean; is_active: boolean; is_stand_in: boolean; last_tested_at: string | null; last_test_ok: boolean | null; last_test_message: string | null };
 type Connector = { id: string; kind: string; name: string; config: Record<string, unknown>; has_secret: boolean; is_active: boolean; last_polled_at: string | null; last_status: string | null };
-type RuntimeSettings = { llm_provider: string; llm_model: string; confidence_threshold: number; auto_push: boolean; policy_number_regex: string; max_auto_push_amount: number; max_loss_age_days: number; review_if_injuries: boolean; date_order: string; blocking_fields: string[] };
+type RuntimeSettings = { llm_provider: string; llm_model: string; confidence_threshold: number; auto_push: boolean; policy_number_regex: string; max_auto_push_amount: number; max_loss_age_days: number; review_if_injuries: boolean; date_order: string; blocking_fields: string[]; review_if_unfilled_mentions: boolean; mention_guard_fields: string[] };
 
 const PLACEHOLDER: Record<string, { base: string; token: string; scopes: string }> = {
   guidewire: { base: "https://<tenant>.<region>.guidewire.net/cc/rest", token: "https://guidewire-hub.okta.com/oauth2/<auth-server-id>/v1/token", scopes: "tenant.<tenantId> <your ClaimCenter API scopes>" },
@@ -194,6 +194,7 @@ function Pipeline() {
           <label className="f">Forms write dates as</label><select value={s.date_order} onChange={(e) => set("date_order", e.target.value)}><option value="month_first">Month first (11/03/2026 = 3 Nov)</option><option value="day_first">Day first (03/11/2026 = 3 Nov)</option></select>
           <label className="f">Fields that must be confident before auto-send</label><input value={(s.blocking_fields || []).join(", ")} onChange={(e) => set("blocking_fields", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} />
           <label className="f"><input type="checkbox" style={{ width: "auto" }} checked={s.review_if_injuries} onChange={(e) => set("review_if_injuries", e.target.checked)} /> Always send bodily-injury claims to an adjuster</label>
+          <label className="f"><input type="checkbox" style={{ width: "auto" }} checked={s.review_if_unfilled_mentions} onChange={(e) => set("review_if_unfilled_mentions", e.target.checked)} /> Hold for review if the source mentions an amount or another party that was not extracted</label>
         </div>
       </div>
       <div className="row" style={{ marginTop: 14 }}><button className="primary" onClick={save}>Save rules</button>{note ? <span className="small">{note}</span> : null}</div>

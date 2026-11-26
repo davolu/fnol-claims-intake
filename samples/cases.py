@@ -461,4 +461,68 @@ CASES = [
         },
         "expect_decision": "auto_push",
     },
+
+    {
+        "id": "c15_auto_email_full_narrative",
+        "format": "email",
+        "email": {
+            "from": "Maria Okafor <maria.okafor@example.com>",
+            "subject": "FNOL – Auto collision – Policy PA-20481736",
+            "body": (
+                "Hi, I'm reporting a car accident. Policy PA-20481736, insured Maria Okafor. "
+                "On 11/14/2026 at about 17:40 at Elm Ave and 5th St, Springfield, IL, I was "
+                "stopped at a red light and Kevin Lowe (Bluegate Auto) hit my rear bumper. "
+                "Police report SPD-26-114502. No injuries. Estimate: rear bumper $1,450, "
+                "trunk lid $820, paint and labour $430 – total $2,700. Reported by Maria "
+                "Okafor, (217) 555-0148."
+            ),
+        },
+        "expect": {
+            "policy_number": "PA-20481736",
+            "line_of_business": "auto",
+            "loss_date": "2026-11-14",
+            "loss_time": "17:40",
+            "loss_cause": "auto_collision",
+            "insured_name": "Maria Okafor",
+            "reporter_name": "Maria Okafor",
+            "other_parties": ["Kevin Lowe"],
+            "police_report_number": "SPD-26-114502",
+            "injuries": False,
+            "estimated_amount": 2700.0,
+            "insured_phone": "(217) 555-0148",
+            "loss_location": "Elm Ave and 5th St, Springfield, IL",
+        },
+        "expect_decision": "auto_push",
+    },
+    {
+        "id": "c16_email_third_party_and_amount",
+        "format": "email",
+        "email": {
+            "from": "Grace Mensah <grace.mensah@example.com>",
+            "subject": "FNOL parking-lot collision PA-60718342",
+            "body": (
+                "Hello claims,\n\nPolicy PA-60718342. Yesterday 20 November 2026 at 16:10 in the "
+                "Westfield Mall parking lot, Springfield IL, Dana Okonkwo of Summit Mutual reversed "
+                "into my driver's door. Police report SPD-26-220118. No one was hurt. Body shop "
+                "quoted the door at $1,900 and the mirror at $350, total $2,250.\n\n"
+                "Grace Mensah, (217) 555-0166"
+            ),
+        },
+        "expect": {
+            "policy_number": "PA-60718342",
+            "line_of_business": "auto",
+            "loss_date": "2026-11-20",
+            "loss_time": "16:10",
+            "loss_cause": "auto_collision",
+            "insured_name": "Grace Mensah",
+            "reporter_name": "Grace Mensah",
+            "other_parties": ["Dana Okonkwo"],
+            "police_report_number": "SPD-26-220118",
+            "injuries": False,
+            "estimated_amount": 2250.0,
+            "insured_phone": "(217) 555-0166",
+            "loss_location": "Westfield Mall parking lot, Springfield IL",
+        },
+        "expect_decision": "auto_push",
+    },
 ]

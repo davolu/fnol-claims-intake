@@ -1,0 +1,142 @@
+{
+  "summary": {
+    "model": "claude-haiku-5-5",
+    "provider": "anthropic",
+    "cases": 1,
+    "field_accuracy": {
+      "policy_number": 1.0,
+      "line_of_business": 1.0,
+      "loss_date": 1.0,
+      "loss_cause": 1.0,
+      "loss_location": 1.0,
+      "insured_name": 1.0,
+      "reporter_name": 1.0,
+      "other_parties": 1.0,
+      "police_report_number": 1.0,
+      "injuries": 1.0,
+      "estimated_amount": 1.0
+    },
+    "field_accuracy_before_self_check": {
+      "policy_number": 1.0,
+      "line_of_business": 1.0,
+      "loss_date": 1.0,
+      "loss_cause": 1.0,
+      "loss_location": 1.0,
+      "insured_name": 1.0,
+      "reporter_name": 1.0,
+      "other_parties": 1.0,
+      "police_report_number": 1.0,
+      "injuries": 1.0,
+      "estimated_amount": 1.0
+    },
+    "overall_field_accuracy": 1.0,
+    "doc_kind_accuracy": 1.0,
+    "decision_accuracy": 1.0,
+    "auto_push_count": 1,
+    "auto_push_precision": 1.0,
+    "unsafe_auto_push": [],
+    "perfect_auto_push_cases": [
+      "c06_email_with_tiff_attachment"
+    ],
+    "total_cost_usd": 0.002422,
+    "input_tokens": 15055,
+    "output_tokens": 1833,
+    "llm_calls": 3,
+    "avg_latency_s": 10.6,
+    "by_format": {
+      "email_attachment": 1.0
+    }
+  },
+  "cases": [
+    {
+      "id": "c06_email_with_tiff_attachment",
+      "format": "email_attachment",
+      "route": "email_with_attachments",
+      "ocr_confidence": 0.934,
+      "kind": "fnol",
+      "kind_ok": true,
+      "decision": "auto_push",
+      "expect_decision": "auto_push",
+      "decision_ok": true,
+      "reasons": [],
+      "self_checked": [
+        "other_parties",
+        "loss_time"
+      ],
+      "fields_ok": {
+        "policy_number": true,
+        "line_of_business": true,
+        "loss_date": true,
+        "loss_cause": true,
+        "loss_location": true,
+        "insured_name": true,
+        "reporter_name": true,
+        "other_parties": true,
+        "police_report_number": true,
+        "injuries": true,
+        "estimated_amount": true
+      },
+      "fields_ok_first_pass": {
+        "policy_number": true,
+        "line_of_business": true,
+        "loss_date": true,
+        "loss_cause": true,
+        "loss_location": true,
+        "insured_name": true,
+        "reporter_name": true,
+        "other_parties": true,
+        "police_report_number": true,
+        "injuries": true,
+        "estimated_amount": true
+      },
+      "values": {
+        "policy_number": "HO-73412850",
+        "line_of_business": "property",
+        "loss_date": "2026-11-18",
+        "loss_time": null,
+        "loss_cause": "wind_hail",
+        "loss_location": "302 Prairie Ln, Wichita, KS 67202",
+        "insured_name": "Elena Petrova",
+        "insured_phone": "(316) 555-0124",
+        "reporter_name": "Jordan Wells",
+        "other_parties": [
+          {
+            "name": "Jordan Wells",
+            "role": "other",
+            "phone": null,
+            "insurer": "Brightline Insurance Agency"
+          }
+        ],
+        "police_report_number": null,
+        "injuries": false,
+        "estimated_amount": 8000.0
+      },
+      "confidence": {
+        "policy_number": 0.95,
+        "line_of_business": 0.9,
+        "loss_date": 0.93,
+        "loss_time": 0.95,
+        "loss_cause": 0.93,
+        "loss_location": 0.95,
+        "insured_name": 0.95,
+        "insured_phone": 0.93,
+        "reporter_name": 0.9,
+        "other_parties": 0.85,
+        "police_report_number": 0.9,
+        "injuries": 0.9,
+        "estimated_amount": 0.95
+      },
+      "latency_s": 10.6,
+      "ocr_s": 3.3,
+      "usage": {
+        "provider": "anthropic",
+        "model": "claude-haiku-5-5",
+        "input_tokens": 15055,
+        "output_tokens": 1833,
+        "calls": 3,
+        "latency_ms": 6436,
+        "cost_usd": 0.002422
+      }
+    }
+  ]
+}

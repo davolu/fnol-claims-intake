@@ -17,6 +17,7 @@ from ..queue import enqueue
 from ..schemas import REQUIRED_FIELDS
 from ..settings_store import get_runtime
 from . import agent
+from . import hints as H
 from .llm import Usage
 from .router import route_and_read
 from .validate import validate
@@ -52,13 +53,14 @@ def decide(
     return ("review" if reasons else "auto_push"), reasons
 
 
-def process_claim(db: Session, claim_id: str) -> Claim:
+def process_claim(db: Session, claim_id: str, *, refresh: bool = False) -> Claim:
     s = get_settings()
     cfg = get_runtime(db)
     claim = db.get(Claim, claim_id)
     if claim is None:
         raise ValueError(f"claim {claim_id} not found")
-    if claim.status in ("pushed", "pushing") or claim.external_claim_number:
+    already_sent = claim.status in ("pushed", "pushing") or bool(claim.external_claim_number)
+    if already_sent and not refresh:
         audit.record(
             db,
             "processing_skipped",
@@ -67,10 +69,15 @@ def process_claim(db: Session, claim_id: str) -> Claim:
         )
         db.commit()
         return claim
+    if already_sent and claim.status == "pushing":
+        raise ValueError("claim is being sent; try again once the push finishes")
+    previous_status = claim.status
+    previous_number = claim.external_claim_number
     doc = claim.document
-    claim.status = "processing"
-    claim.error = None
-    db.commit()
+    if not already_sent:
+        claim.status = "processing"
+        claim.error = None
+        db.commit()
     timings: dict[str, int] = {}
     usage = Usage(model=cfg["llm_model"], provider=cfg["llm_provider"])
     t_all = time.perf_counter()
@@ -109,18 +116,14 @@ def process_claim(db: Session, claim_id: str) -> Claim:
             st.details = {"capped": changes}
 
         thr = float(cfg["confidence_threshold"])
-        low = [
-            k
-            for k, f in fields.items()
-            if f["confidence"] < thr and (k in REQUIRED_FIELDS or f["value"] not in (None, "", []))
-        ]
+        low = H.fields_to_recheck(fields, src.source_text, thr, REQUIRED_FIELDS)
         with audit.trace_step(db, "self_check", claim_id=claim.id, document_id=doc.id, timings=timings) as st:
             sc_changes, sc_usage = agent.self_check(src.source_text, fields, low, cfg["llm_provider"], cfg["llm_model"])
             usage.add(sc_usage)
             st.details = {"rechecked": low, "changes": sc_changes, "usage": sc_usage.as_dict()}
 
         with audit.trace_step(db, "validate", claim_id=claim.id, document_id=doc.id, timings=timings) as st:
-            issues = validate(db, fields, cfg)
+            issues = validate(db, fields, cfg, source_text=src.source_text)
             st.details = {"issues": issues}
 
         active = db.query(Integration).filter(Integration.is_active.is_(True)).first()
@@ -132,17 +135,38 @@ def process_claim(db: Session, claim_id: str) -> Claim:
         claim.decision = decision
         claim.llm_usage = usage.as_dict()
         claim.timings_ms = timings
-        claim.status = "approved" if decision == "auto_push" else "needs_review"
-        audit.record(
-            db,
-            "decision",
-            claim_id=claim.id,
-            actor="agent",
-            step="decide",
-            details={"decision": decision, "reasons": reasons, "usage": usage.as_dict(), "timings_ms": timings},
-        )
-        if decision == "auto_push":
-            enqueue(db, "push_claim", {"claim_id": claim.id}, dedupe_key=f"push:{claim.id}:auto")
+        if already_sent:
+            # Refresh extraction for display and the audit trail, but never send a second claim.
+            claim.status = previous_status if previous_status in ("pushed", "push_failed") else "pushed"
+            claim.external_claim_number = previous_number or claim.external_claim_number
+            audit.record(
+                db,
+                "extraction_refreshed",
+                claim_id=claim.id,
+                actor="agent",
+                step="decide",
+                details={
+                    "decision": decision,
+                    "reasons": reasons,
+                    "already_sent": True,
+                    "external_claim_number": claim.external_claim_number,
+                    "pushed_again": False,
+                    "usage": usage.as_dict(),
+                    "timings_ms": timings,
+                },
+            )
+        else:
+            claim.status = "approved" if decision == "auto_push" else "needs_review"
+            audit.record(
+                db,
+                "decision",
+                claim_id=claim.id,
+                actor="agent",
+                step="decide",
+                details={"decision": decision, "reasons": reasons, "usage": usage.as_dict(), "timings_ms": timings},
+            )
+            if decision == "auto_push":
+                enqueue(db, "push_claim", {"claim_id": claim.id}, dedupe_key=f"push:{claim.id}:auto")
         db.commit()
     except Exception as e:
         db.rollback()

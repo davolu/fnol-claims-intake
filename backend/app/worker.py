@@ -84,7 +84,7 @@ def schedule_polls(db) -> None:
 def run_job(db, job: Job) -> None:
     p = job.payload or {}
     if job.kind == "process_claim":
-        process_claim(db, p["claim_id"])
+        process_claim(db, p["claim_id"], refresh=bool(p.get("refresh")))
     elif job.kind == "push_claim":
         push_claim(db, p["claim_id"], actor=p.get("actor", "system"))
     elif job.kind == "poll_email":

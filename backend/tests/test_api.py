@@ -44,6 +44,12 @@ class FakeLLM:
                 ],
                 "Rear bumper replacement $1,450.00",
             ),
+            "other_parties": (
+                [{"name": "Kevin Lowe", "role": "driver", "organisation": "Bluegate Auto"}],
+                "Kevin Lowe (driver of other vehicle)",
+            ),
+            "police_report_number": ("SPD-26-114502", "SPD-26-114502"),
+            "insured_phone": ("(217) 555-0148", "(217) 555-0148"),
         }
         vals.update(self.overrides)
         fields = {k: {"value": v, "confidence": 0.95, "source": s} for k, (v, s) in vals.items()}
@@ -179,3 +185,30 @@ def test_reprocess_does_not_double_process_when_a_retry_is_pending(client, mock_
     d = client.get(f"/api/claims/{cid}", headers=SUP).json()
     assert d["status"] == "needs_review"
     assert [e["event_type"] for e in d["events"]].count("decision") == 1
+
+
+def test_refresh_of_a_pushed_claim_does_not_create_a_duplicate(client, mock_cc, monkeypatch):
+    """Re-running extraction on a claim already in ClaimCenter must not push a second FNOL."""
+    monkeypatch.setattr(agent, "get_provider", lambda p, m: FakeLLM())
+    _activate(client)
+    data = (SAMPLES / "c01_auto_typed_pdf.pdf").read_bytes()
+    cid = client.post("/api/documents", headers=SUP, files=[("files", ("c01.pdf", data, "application/pdf"))]).json()[
+        "results"
+    ][0]["claim_id"]
+    _drain()
+    first = client.get(f"/api/claims/{cid}", headers=SUP).json()
+    assert first["status"] == "pushed"
+    number = first["external_claim_number"]
+    standin_ids = set(mock_cc.CLAIMS)
+    assert client.post(f"/api/claims/{cid}/reprocess", headers=SUP).status_code == 200
+    still = client.get(f"/api/claims/{cid}", headers=SUP).json()
+    assert still["status"] == "pushed"  # not flipped to queued while refresh is pending
+    assert still["external_claim_number"] == number
+    _drain()
+    after = client.get(f"/api/claims/{cid}", headers=SUP).json()
+    assert after["status"] == "pushed"
+    assert after["external_claim_number"] == number
+    assert set(mock_cc.CLAIMS) == standin_ids
+    kinds = [e["event_type"] for e in after["events"]]
+    assert "extraction_refreshed" in kinds
+    assert kinds.count("pushed") == 1

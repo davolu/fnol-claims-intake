@@ -17,6 +17,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from ..schemas import FIELD_SPECS, field_json_schema
+from . import hints as H
 from . import tools as T
 from .llm import LoopResult, ToolSpec, Usage, get_provider
 
@@ -37,6 +38,13 @@ Rules:
   confidence <= 0.6.
 - loss_date is the date the loss happened, not the date reported or the form date.
 - estimated_amount is the total claimed/estimated damage. line_items lists itemised amounts if present.
+- For free-text emails and unstructured narratives, go through the body systematically and extract:
+  the loss time, every money amount (itemised line_items plus the stated total as estimated_amount;
+  call parse_amount and sum_amounts), police or fire report numbers, phone numbers, and every other
+  person or company named besides the insured (other_parties, with a role such as driver). If the
+  reporter is the insured, a phone next to "reported by" is insured_phone as well.
+- A "DETERMINISTIC SCAN" section may be attached; treat it as hints only and still copy quotes from
+  the document itself.
 - document_kind: "fnol" for a new loss report, "claim_followup" for updates on an existing claim,
   "not_claim" for anything else (newsletters, spam, quotes).
 - Today's date is {today}. Then call submit_extraction exactly once."""
@@ -231,12 +239,18 @@ def extract(
     db: Session, source_text: str, provider: str, model: str, max_steps: int, context: str = ""
 ) -> tuple[str, float, dict[str, dict[str, Any]], LoopResult]:
     llm = get_provider(provider, model)
-    user = (f"{context}\n\n" if context else "") + "DOCUMENT TEXT (OCR/parsed):\n<<<\n" + source_text[:60000] + "\n>>>"
+    known: list[str] = H.names_from_headers(source_text)
+    scan = H.hint_summary(H.source_hints(source_text, known))
+    user = (f"{context}\n\n" if context else "")
+    if scan:
+        user += scan + "\n\n"
+    user += "DOCUMENT TEXT (OCR/parsed):\n<<<\n" + source_text[:60000] + "\n>>>"
     res = llm.run_tools(
         SYSTEM.replace("{today}", date.today().isoformat()), user, _tool_specs(db), "submit_extraction", max_steps
     )
     fi = res.final_input
     fields = coerce_fields(_as_dict(fi.get("fields")))
+    H.drop_self_parties(fields, source_text)
     kind = fi.get("document_kind") or "fnol"
     kconf = float(fi.get("document_kind_confidence") or 0.0)
     return kind, kconf, fields, res
@@ -245,7 +259,9 @@ def extract(
 VERIFY_SYSTEM = """You are a meticulous claims QA reviewer. Some extracted FNOL fields were flagged as
 low-confidence. Re-read the document carefully and, for each listed field, return the correct value, a
 calibrated confidence and an exact supporting quote from the document. Keep the value if it was right. If the
-document does not contain it, return null. Today's date is {today}. Call submit_verification once."""
+document does not contain it, return null. Empty fields are included when a deterministic scan of the
+source suggests the fact is present — fill them if the document supports them. Today's date is {today}.
+Call submit_verification once."""
 
 
 def self_check(
@@ -298,7 +314,14 @@ def self_check(
         fields[k].update(
             {"value": new_val, "confidence": max(0.0, min(1.0, new_conf)), "source": new_src, "method": "self_check"}
         )
-        fields[k]["notes"] = [*before.get("notes", []), f"self-check: {v.get('reason', '')}".strip()]
+        if k == "other_parties":
+            coerced, role_notes = _coerce_roles(new_val if isinstance(new_val, list) else [])
+            fields[k]["value"] = coerced
+            new_val = coerced
+        notes = [*before.get("notes", []), f"self-check: {v.get('reason', '')}".strip()]
+        if k == "other_parties":
+            notes.extend(role_notes)
+        fields[k]["notes"] = notes
         changes.append(
             {
                 "field": k,
@@ -307,4 +330,5 @@ def self_check(
                 "confidence_after": fields[k]["confidence"],
             }
         )
+    H.drop_self_parties(fields, source_text)
     return changes, res.usage
