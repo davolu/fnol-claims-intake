@@ -53,7 +53,7 @@ flowchart LR
 | Email intake | `backend/app/email_connectors/connectors.py` — read-only by construction (allow-listed Composio tools, `gmail.readonly`, Graph `Mail.Read`) |
 | Credentials | Fernet-encrypted at rest, never returned by the API, each connection has **Test connection**; activation requires a passing test |
 | Evals | `backend/app/evals/runner.py`, labelled set in `samples/eval/`, UI at **Evals** |
-| UI | `web/` (Next.js 15, TypeScript): Dashboard, Intake (drag-drop), Review queue, claim workspace (scan left, fields right), Audit log, Settings, Evals |
+| UI | `web/` (Next.js 15, TypeScript, Tailwind v4, shadcn-style components, lucide icons, Inter; light and dark): Dashboard, Intake (drag-drop), Review queue, claim workspace (scan left, fields right), Audit log, Settings, Evals |
 
 ### Guidewire mapping (verified against docs.guidewire.com, Cloud API Consumer Guide)
 

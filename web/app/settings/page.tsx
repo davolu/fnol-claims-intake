@@ -2,6 +2,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { ApiError, api, jsonInit, useApi } from "@/lib/api";
+import { PageHeader } from "@/components/ui";
 import { when } from "@/lib/format";
 
 type CatalogItem = { kind: string; label: string; auth_modes?: string[]; notes: string; verified_against?: string; fields?: string[]; secret?: string };
@@ -169,7 +170,7 @@ function Pipeline() {
   const [s, setS] = useState<RuntimeSettings | null>(null);
   const [note, setNote] = useState<string | null>(null);
   useEffect(() => { if (data) setS(data.settings); }, [data]);
-  if (!s || !data) return <p className="muted">Loading…</p>;
+  if (!s || !data) return <div className="skeleton h-64" />;
   const set = (k: keyof RuntimeSettings, v: unknown) => setS({ ...s, [k]: v });
   async function save() { try { await api("/settings", jsonInit("PUT", s)); setNote("Saved."); reload(); } catch (e) { setNote(msg(e)); } }
   return (
@@ -206,8 +207,7 @@ function SettingsInner() {
   const [tab, setTab] = useState(params.get("tab") ?? "claims");
   return (
     <>
-      <h1>Settings</h1>
-      <p className="sub">Where claims go, where they come from, and when a person must look first. Changes are written to the audit log.</p>
+      <PageHeader title="Settings" description="Where claims go, where they come from, and when a person must look first. Changes are written to the audit log." />
       <div className="tabs">
         <button className={tab === "claims" ? "on" : ""} onClick={() => setTab("claims")}>Claims system</button>
         <button className={tab === "email" ? "on" : ""} onClick={() => setTab("email")}>Email intake</button>
@@ -219,5 +219,5 @@ function SettingsInner() {
 }
 
 export default function SettingsPage() {
-  return <Suspense fallback={<p className="muted">Loading…</p>}><SettingsInner /></Suspense>;
+  return <Suspense fallback={<div className="skeleton h-64" />}><SettingsInner /></Suspense>;
 }

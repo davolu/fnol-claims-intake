@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { StatusBadge } from "@/components/ui";
+import { ArrowRight, FileText, Loader2, Mail, RefreshCw, UploadCloud } from "lucide-react";
+import { Button, Card, CardHeader, Empty, PageHeader, Pill, StatusBadge, Td, Th } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { api, useApi } from "@/lib/api";
 import { when } from "@/lib/format";
 
@@ -43,10 +45,12 @@ export default function Intake() {
 
   return (
     <>
-      <h1>Intake</h1>
-      <p className="sub">Drop scanned claim forms (PDF, TIFF, PNG/JPEG), typed PDFs or saved emails (.eml). Each file becomes one claim.</p>
+      <PageHeader title="Intake" description="Drop scanned claim forms (PDF, TIFF, PNG/JPEG), typed PDFs or saved emails (.eml). Each file becomes one claim." />
       <div
-        className={`drop ${over ? "over" : ""}`}
+        className={cn(
+          "group relative cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed px-6 py-14 text-center transition",
+          over ? "border-primary bg-accent/70" : "border-input bg-card hover:border-primary/50 hover:bg-accent/30",
+        )}
         onDragOver={(e) => { e.preventDefault(); setOver(true); }}
         onDragLeave={() => setOver(false)}
         onDrop={(e) => { e.preventDefault(); setOver(false); upload(e.dataTransfer.files); }}
@@ -54,55 +58,69 @@ export default function Intake() {
         role="button"
         tabIndex={0}
       >
-        <div className="big">{busy ? "Uploading…" : "Drag & drop claim documents here"}</div>
-        <div className="muted">or click to choose files · PDF, TIFF, PNG, JPEG, EML, TXT · max 25 MB each</div>
-        <input ref={input} type="file" multiple hidden accept=".pdf,.tif,.tiff,.png,.jpg,.jpeg,.eml,.txt"
-          onChange={(e) => e.target.files && upload(e.target.files)} />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_80%_at_50%_0%,color-mix(in_srgb,var(--primary)_9%,transparent),transparent)]" />
+        <div className="relative">
+          <span className={cn("mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl bg-accent text-accent-foreground shadow-card transition", over && "scale-110")}>
+            {busy ? <Loader2 size={22} className="animate-spin" /> : <UploadCloud size={22} />}
+          </span>
+          <div className="text-[16px] font-semibold tracking-tight">{busy ? "Uploading…" : over ? "Release to upload" : "Drag & drop claim documents here"}</div>
+          <div className="mt-1 text-[12.5px] text-muted-foreground">or click to choose files</div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5">
+            {["PDF", "TIFF", "PNG", "JPEG", "EML", "TXT"].map((t) => <Pill key={t}>{t}</Pill>)}
+            <span className="text-[11.5px] text-muted-foreground">· max 25 MB each</span>
+          </div>
+          <input ref={input} type="file" multiple hidden accept=".pdf,.tif,.tiff,.png,.jpg,.jpeg,.eml,.txt"
+            onChange={(e) => e.target.files && upload(e.target.files)} />
+        </div>
       </div>
 
       {results.length ? (
-        <div className="panel" style={{ marginTop: 18 }}>
-          <h2>This session</h2>
-          <table>
-            <thead><tr><th>File</th><th>Claim</th><th>Status</th></tr></thead>
+        <Card className="mt-5 overflow-hidden">
+          <CardHeader title="This session" description={`${results.length} file${results.length > 1 ? "s" : ""} uploaded`} />
+          <table className="w-full border-collapse text-[13px]">
+            <thead><tr><Th>File</Th><Th>Claim</Th><Th>Status</Th></tr></thead>
             <tbody>
               {results.map((r, i) => (
                 <tr key={i}>
-                  <td>{r.filename}</td>
-                  <td className="mono">{r.claim_id ? <Link href={`/claims/${r.claim_id}`}>{r.reference}</Link> : "—"}</td>
-                  <td>
-                    {r.error ? <span className="err">{r.error}</span> : <StatusBadge status={statusOf(r.claim_id) ?? r.status ?? "queued"} />}
-                    {r.duplicate ? <span className="small muted"> · duplicate of an earlier upload, not processed twice</span> : null}
-                  </td>
+                  <Td><span className="inline-flex items-center gap-2"><FileText size={14} className="text-muted-foreground" />{r.filename}</span></Td>
+                  <Td className="font-mono text-[12px]">{r.claim_id ? <Link href={`/claims/${r.claim_id}`}>{r.reference}</Link> : "—"}</Td>
+                  <Td>
+                    {r.error ? <span className="text-rose-600">{r.error}</span> : <StatusBadge status={statusOf(r.claim_id) ?? r.status ?? "queued"} />}
+                    {r.duplicate ? <span className="ml-2 text-[12px] text-muted-foreground">duplicate of an earlier upload, not processed twice</span> : null}
+                  </Td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </Card>
       ) : null}
 
-      <div className="panel" style={{ marginTop: 18 }}>
-        <div className="spread"><h2>Claims inboxes</h2><Link href="/settings?tab=email">Manage connectors →</Link></div>
-        {msg ? <p className="ok">{msg}</p> : null}
-        {!conns?.connectors.length ? <p className="muted">No inbox connected yet.</p> : (
-          <table>
-            <thead><tr><th>Connector</th><th>Filter</th><th>State</th><th>Last check</th><th>Result</th><th></th></tr></thead>
+      <Card className="mt-5 overflow-hidden">
+        <CardHeader
+          icon={Mail}
+          title="Claims inboxes"
+          description="Inbox access is read-only: the app never sends, deletes, moves or labels email."
+          action={<Link href="/settings?tab=email" className="inline-flex items-center gap-1 text-[12.5px] font-medium">Manage connectors <ArrowRight size={13} /></Link>}
+        />
+        {msg ? <div className="px-5 pt-3 text-[12.5px] text-emerald-600">{msg}</div> : null}
+        {!conns?.connectors.length ? <Empty icon={Mail} title="No inbox connected yet">Add Gmail or Microsoft 365 in Settings to pull FNOL emails automatically.</Empty> : (
+          <table className="w-full border-collapse text-[13px]">
+            <thead><tr><Th>Connector</Th><Th>Filter</Th><Th>State</Th><Th>Last check</Th><Th>Result</Th><Th /></tr></thead>
             <tbody>
               {conns.connectors.map((c) => (
                 <tr key={c.id}>
-                  <td><b>{c.name}</b><div className="small muted">{c.kind}</div></td>
-                  <td className="mono small">{String(c.config?.query ?? c.config?.subject_filter ?? "")}</td>
-                  <td>{c.is_active ? <span className="badge s-pushed">Watching</span> : <span className="badge s-rejected">Paused</span>}</td>
-                  <td className="small">{when(c.last_polled_at)}</td>
-                  <td className="small">{c.last_status ?? "—"}</td>
-                  <td><button onClick={() => poll(c.id)}>Check now</button></td>
+                  <Td><div className="font-medium">{c.name}</div><div className="text-[11.5px] text-muted-foreground">{c.kind}</div></Td>
+                  <Td><code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11.5px]">{String(c.config?.query ?? c.config?.subject_filter ?? "")}</code></Td>
+                  <Td>{c.is_active ? <Pill tone="green">Watching</Pill> : <Pill>Paused</Pill>}</Td>
+                  <Td className="text-[12px] text-muted-foreground">{when(c.last_polled_at)}</Td>
+                  <Td className="max-w-[260px] text-[12px] text-muted-foreground">{c.last_status ?? "—"}</Td>
+                  <Td className="text-right"><Button size="sm" onClick={() => poll(c.id)}><RefreshCw size={12} />Check now</Button></Td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-        <p className="small muted">Inbox access is read-only: the app never sends, deletes, moves or labels email.</p>
-      </div>
+      </Card>
     </>
   );
 }

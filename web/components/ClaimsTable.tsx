@@ -1,7 +1,9 @@
 "use client";
+import { FileText, Inbox, Mail, Paperclip, ScanLine } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ROUTE_LABEL, money, ms, usd, when } from "@/lib/format";
-import { Confidence, StatusBadge } from "./ui";
+import { Confidence, Empty, Pill, StatusBadge, Td, Th } from "./ui";
 
 export type ClaimRow = {
   id: string; reference: string; status: string; decision: string | null; policy_number: string | null;
@@ -11,37 +13,64 @@ export type ClaimRow = {
   total_ms: number | null; created_at: string;
 };
 
+const ROUTE_ICON: Record<string, typeof FileText> = {
+  text_pdf: FileText,
+  scanned_form: ScanLine,
+  free_text_email: Mail,
+  email_with_attachments: Paperclip,
+};
+
 export default function ClaimsTable({ rows, empty }: { rows: ClaimRow[]; empty?: string }) {
   const router = useRouter();
-  if (!rows.length) return <p className="muted">{empty ?? "No claims yet."}</p>;
+  if (!rows.length) return <Empty icon={Inbox} title="Nothing here yet">{empty ?? "No claims yet."}</Empty>;
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Reference</th><th>Status</th><th>Source</th><th>Policy</th><th>Insured</th><th>Loss date</th>
-          <th>Cause</th><th>Amount</th><th>Lowest conf.</th><th>Claim #</th><th>Time</th><th>LLM cost</th>
-          <th>Received</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((c) => (
-          <tr key={c.id} className="click" onClick={() => router.push(`/claims/${c.id}`)}>
-            <td className="mono"><a href={`/claims/${c.id}`}>{c.reference}</a></td>
-            <td><StatusBadge status={c.status} />{c.review_reason_count ? <div className="small muted">{c.review_reason_count} flag(s)</div> : null}</td>
-            <td><span className="tag">{c.route ? ROUTE_LABEL[c.route] ?? c.route : "—"}</span><div className="small muted">{c.source?.startsWith("email") ? "email" : "upload"}</div></td>
-            <td className="mono">{c.policy_number ?? "—"}</td>
-            <td>{c.insured_name ?? "—"}</td>
-            <td>{c.loss_date ?? "—"}</td>
-            <td>{c.loss_cause?.replace(/_/g, " ") ?? "—"}</td>
-            <td>{money(c.estimated_amount, c.currency)}</td>
-            <td>{c.min_confidence !== null ? <Confidence value={c.min_confidence} /> : "—"}</td>
-            <td className="mono">{c.external_claim_number ?? "—"}</td>
-            <td>{ms(c.total_ms)}</td>
-            <td>{usd(c.cost_usd)}</td>
-            <td className="small">{when(c.created_at)}</td>
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-[13px]">
+        <thead>
+          <tr>
+            <Th>Claim</Th><Th>Status</Th><Th>Insured</Th><Th>Loss</Th><Th className="text-right">Amount</Th>
+            <Th>Confidence</Th><Th>Claim #</Th><Th className="text-right">Time · cost</Th><Th>Received</Th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((c) => {
+            const Icon = (c.route && ROUTE_ICON[c.route]) || FileText;
+            return (
+              <tr key={c.id} className="group cursor-pointer transition hover:bg-muted/50" onClick={() => router.push(`/claims/${c.id}`)}>
+                <Td>
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><Icon size={15} /></span>
+                    <div className="min-w-0">
+                      <Link href={`/claims/${c.id}`} className="whitespace-nowrap font-mono text-[12px] font-medium text-foreground hover:text-primary" onClick={(e) => e.stopPropagation()}>{c.reference}</Link>
+                      <div className="text-[11.5px] text-muted-foreground">{c.route ? ROUTE_LABEL[c.route] ?? c.route : "—"}{c.source?.startsWith("email") ? " · inbox" : ""}</div>
+                    </div>
+                  </div>
+                </Td>
+                <Td>
+                  <StatusBadge status={c.status} />
+                  {c.review_reason_count ? <div className="mt-1 text-[11.5px] text-amber-700 dark:text-amber-400">{c.review_reason_count} flag{c.review_reason_count > 1 ? "s" : ""}</div> : null}
+                </Td>
+                <Td>
+                  <div className="font-medium">{c.insured_name ?? <span className="text-muted-foreground">—</span>}</div>
+                  <div className="font-mono text-[11.5px] text-muted-foreground">{c.policy_number ?? "no policy"}</div>
+                </Td>
+                <Td>
+                  <div className="tabular-nums">{c.loss_date ?? "—"}</div>
+                  {c.loss_cause ? <Pill className="mt-0.5 capitalize">{c.loss_cause.replace(/_/g, " ")}</Pill> : null}
+                </Td>
+                <Td className="text-right font-medium tabular-nums">{money(c.estimated_amount, c.currency)}</Td>
+                <Td>{c.min_confidence !== null ? <Confidence value={c.min_confidence} /> : <span className="text-muted-foreground">—</span>}</Td>
+                <Td className="font-mono text-[12px]">{c.external_claim_number ?? <span className="text-muted-foreground">—</span>}</Td>
+                <Td className="text-right">
+                  <div className="tabular-nums">{ms(c.total_ms)}</div>
+                  <div className="text-[11.5px] text-muted-foreground tabular-nums">{usd(c.cost_usd)}</div>
+                </Td>
+                <Td className="whitespace-nowrap text-[12px] text-muted-foreground">{when(c.created_at)}</Td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

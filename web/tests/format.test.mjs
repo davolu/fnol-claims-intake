@@ -26,3 +26,11 @@ test("stand-in banner is shown for mock integrations", () => {
   const src = readFileSync(new URL("../components/Shell.tsx", import.meta.url), "utf8");
   assert.match(src, /It is not Guidewire software/);
 });
+
+test("design system: tailwind + shadcn-style primitives are wired", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /@import "tailwindcss"/);
+  assert.match(css, /@fontsource-variable\/inter/);
+  const ui = readFileSync(new URL("../components/ui.tsx", import.meta.url), "utf8");
+  for (const name of ["Button", "Card", "StatusBadge", "Confidence", "Kpi"]) assert.match(ui, new RegExp(`export function ${name}`));
+});
