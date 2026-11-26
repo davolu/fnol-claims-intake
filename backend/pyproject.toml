@@ -1,0 +1,45 @@
+[project]
+name = "fnol-claims-intake"
+version = "0.1.0"
+description = "First Notice of Loss (FNOL) claims intake: OCR, LLM extraction with per-field confidence, validation, human review and Guidewire ClaimCenter push."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy>=2.0",
+  "alembic>=1.13",
+  "psycopg[binary]>=3.2",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "python-multipart>=0.0.9",
+  "httpx>=0.27",
+  "cryptography>=42",
+  "anthropic>=0.40",
+  "openai>=1.40",
+  "pytesseract>=0.3.10",
+  "pdf2image>=1.17",
+  "pdfplumber>=0.11",
+  "pillow>=10",
+  "python-dateutil>=2.9",
+  "composio>=0.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10", "reportlab>=4", "types-python-dateutil"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,17 @@
+INFO:     Started server process [548541]
+INFO:     Waiting for application startup.
+INFO:fnol.seed:seeded policies from /workspace/fnol-claims-intake/samples/policies.json
+INFO:fnol.seed:seeded stand-in ClaimCenter integration
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:44298 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60012 - "GET /api/integrations HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: POST http://localhost:8090/oauth2/token "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: GET http://localhost:8090/cc/rest/claim/v1/claims?pageSize=1 "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: GET http://localhost:8090/cc/rest/common/v1/typelists/LossCause "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:60022 - "POST /api/integrations/5f03fffdb6fe4f2c8305a7f6046fbc7a/test HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60024 - "POST /api/integrations/5f03fffdb6fe4f2c8305a7f6046fbc7a/activate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60038 - "POST /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47316 - "GET /api/claims/9efd299551874774ba3fbdcaad728008 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44532 - "POST /api/claims/9efd299551874774ba3fbdcaad728008/reprocess HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58362 - "GET /api/claims/9efd299551874774ba3fbdcaad728008 HTTP/1.1" 200 OK

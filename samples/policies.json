@@ -1,0 +1,14 @@
+[
+  {"policy_number": "PA-20481736", "insured_name": "Maria Okafor", "policy_type": "PersonalAuto", "effective_date": "2026-03-01", "expiration_date": "2027-02-28", "status": "inforce"},
+  {"policy_number": "PA-30917254", "insured_name": "Daniel Reyes", "policy_type": "PersonalAuto", "effective_date": "2026-01-15", "expiration_date": "2027-01-14", "status": "inforce"},
+  {"policy_number": "PA-41120988", "insured_name": "Priya Raman", "policy_type": "PersonalAuto", "effective_date": "2026-06-01", "expiration_date": "2027-05-31", "status": "inforce"},
+  {"policy_number": "PA-55203619", "insured_name": "Thomas Becker", "policy_type": "PersonalAuto", "effective_date": "2025-02-01", "expiration_date": "2026-01-31", "status": "expired"},
+  {"policy_number": "PA-60718342", "insured_name": "Grace Mensah", "policy_type": "PersonalAuto", "effective_date": "2026-04-10", "expiration_date": "2027-04-09", "status": "inforce"},
+  {"policy_number": "HO-70245519", "insured_name": "Samuel Adeyemi", "policy_type": "Homeowners", "effective_date": "2026-02-01", "expiration_date": "2027-01-31", "status": "inforce"},
+  {"policy_number": "HO-71830264", "insured_name": "Laura Chen", "policy_type": "Homeowners", "effective_date": "2026-05-20", "expiration_date": "2027-05-19", "status": "inforce"},
+  {"policy_number": "HO-72599107", "insured_name": "Kwame Asante", "policy_type": "Homeowners", "effective_date": "2026-01-01", "expiration_date": "2026-12-31", "status": "inforce"},
+  {"policy_number": "HO-73412850", "insured_name": "Elena Petrova", "policy_type": "Homeowners", "effective_date": "2026-07-01", "expiration_date": "2027-06-30", "status": "inforce"},
+  {"policy_number": "CP-80156472", "insured_name": "Harbor Street Bakery LLC", "policy_type": "CommercialProperty", "effective_date": "2026-01-01", "expiration_date": "2026-12-31", "status": "inforce"},
+  {"policy_number": "CP-81903345", "insured_name": "Lakeside Dental Group", "policy_type": "CommercialProperty", "effective_date": "2026-03-15", "expiration_date": "2027-03-14", "status": "inforce"},
+  {"policy_number": "PA-62284071", "insured_name": "Oliver Grant", "policy_type": "PersonalAuto", "effective_date": "2026-08-01", "expiration_date": "2027-07-31", "status": "inforce"}
+]

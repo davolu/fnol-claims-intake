@@ -1,0 +1,279 @@
+[
+  {
+    "id": "c01_auto_typed_pdf",
+    "file": "c01_auto_typed_pdf.pdf",
+    "format": "form_pdf",
+    "expect": {
+      "policy_number": "PA-20481736",
+      "line_of_business": "auto",
+      "loss_date": "2026-11-14",
+      "loss_cause": "auto_collision",
+      "insured_name": "Maria Okafor",
+      "reporter_name": "Maria Okafor",
+      "other_parties": [
+        "Kevin Lowe"
+      ],
+      "police_report_number": "SPD-26-114502",
+      "injuries": false,
+      "estimated_amount": 2700.0,
+      "loss_location": "Intersection of Elm Ave and 5th St, Springfield, IL"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
+  },
+  {
+    "id": "c02_auto_scanned_pdf",
+    "file": "c02_auto_scanned_pdf.pdf",
+    "format": "form_scan_pdf",
+    "expect": {
+      "policy_number": "PA-30917254",
+      "line_of_business": "auto",
+      "loss_date": "2026-10-29",
+      "loss_cause": "auto_collision",
+      "insured_name": "Daniel Reyes",
+      "reporter_name": "Daniel Reyes",
+      "other_parties": [
+        "Alan Brooks"
+      ],
+      "police_report_number": null,
+      "injuries": false,
+      "estimated_amount": 1980.0,
+      "loss_location": "Parking lot, 1200 Market St, Denver, CO"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
+  },
+  {
+    "id": "c03_water_tiff_2pages",
+    "file": "c03_water_tiff_2pages.tif",
+    "format": "form_scan_tiff",
+    "expect": {
+      "policy_number": "HO-70245519",
+      "line_of_business": "property",
+      "loss_date": "2026-11-02",
+      "loss_cause": "water_damage",
+      "insured_name": "Samuel Adeyemi",
+      "reporter_name": "Ngozi Adeyemi",
+      "other_parties": [],
+      "police_report_number": null,
+      "injuries": false,
+      "estimated_amount": 6750.0,
+      "loss_location": "48 Willow Creek Rd, Austin, TX 78704"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
+  },
+  {
+    "id": "c04_fire_items_mismatch",
+    "file": "c04_fire_items_mismatch.pdf",
+    "format": "form_scan_pdf",
+    "expect": {
+      "policy_number": "HO-71830264",
+      "line_of_business": "property",
+      "loss_date": "2026-11-09",
+      "loss_cause": "fire",
+      "insured_name": "Laura Chen",
+      "reporter_name": "Laura Chen",
+      "other_parties": [],
+      "police_report_number": "PFD-2026-3381",
+      "injuries": false,
+      "estimated_amount": 5150.0,
+      "loss_location": "7 Harbor View Dr, Portland, ME 04101"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "review"
+  },
+  {
+    "id": "c05_burglary_email",
+    "file": "c05_burglary_email.eml",
+    "format": "email",
+    "expect": {
+      "policy_number": "HO-72599107",
+      "line_of_business": "property",
+      "loss_date": "2026-11-21",
+      "loss_cause": "theft_burglary",
+      "insured_name": "Kwame Asante",
+      "reporter_name": "Kwame Asante",
+      "other_parties": [],
+      "police_report_number": "CPD-26-889120",
+      "injuries": false,
+      "estimated_amount": 4600.0,
+      "loss_location": "15 Maple Grove, Columbus, OH 43215"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
+  },
+  {
+    "id": "c06_email_with_tiff_attachment",
+    "file": "c06_email_with_tiff_attachment.eml",
+    "format": "email_attachment",
+    "expect": {
+      "policy_number": "HO-73412850",
+      "line_of_business": "property",
+      "loss_date": "2026-11-18",
+      "loss_cause": "wind_hail",
+      "insured_name": "Elena Petrova",
+      "reporter_name": "Jordan Wells",
+      "other_parties": [],
+      "police_report_number": null,
+      "injuries": false,
+      "estimated_amount": 8000.0,
+      "loss_location": "302 Prairie Ln, Wichita, KS 67202"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
+  },
+  {
+    "id": "c07_glass_ambiguous_date",
+    "file": "c07_glass_ambiguous_date.eml",
+    "format": "email",
+    "expect": {
+      "policy_number": "PA-41120988",
+      "line_of_business": "auto",
+      "loss_date": "2026-11-03",
+      "loss_cause": "glass_damage",
+      "insured_name": "Priya Raman",
+      "reporter_name": "Priya Raman",
+      "other_parties": [],
+      "police_report_number": null,
+      "injuries": false,
+      "estimated_amount": 640.0,
+      "loss_location": "I-95 near exit 12"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "review"
+  },
+  {
+    "id": "c08_auto_injury",
+    "file": "c08_auto_injury.pdf",
+    "format": "form_pdf",
+    "expect": {
+      "policy_number": "PA-60718342",
+      "line_of_business": "auto",
+      "loss_date": "2026-11-20",
+      "loss_cause": "auto_collision",
+      "insured_name": "Grace Mensah",
+      "reporter_name": "Grace Mensah",
+      "other_parties": [
+        "Robert Hale",
+        "Ama Mensah"
+      ],
+      "police_report_number": "NYSP-26-55120",
+      "injuries": true,
+      "estimated_amount": 9400.0,
+      "loss_location": "Route 9 southbound near mile marker 41, Albany, NY"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "review"
+  },
+  {
+    "id": "c09_expired_policy",
+    "file": "c09_expired_policy.pdf",
+    "format": "form_scan_pdf",
+    "expect": {
+      "policy_number": "PA-55203619",
+      "line_of_business": "auto",
+      "loss_date": "2026-11-11",
+      "loss_cause": "vandalism",
+      "insured_name": "Thomas Becker",
+      "reporter_name": "Thomas Becker",
+      "other_parties": [],
+      "police_report_number": "MPD-26-40211",
+      "injuries": false,
+      "estimated_amount": 2250.0,
+      "loss_location": "Driveway, 88 Birch St, Madison, WI"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "review"
+  },
+  {
+    "id": "c10_unknown_policy",
+    "file": "c10_unknown_policy.eml",
+    "format": "email",
+    "expect": {
+      "policy_number": "PA-99887766",
+      "line_of_business": "auto",
+      "loss_date": "2026-11-17",
+      "loss_cause": "auto_collision",
+      "insured_name": "Marcus Hill",
+      "reporter_name": "Marcus Hill",
+      "other_parties": [
+        "Susan Park"
+      ],
+      "police_report_number": null,
+      "injuries": false,
+      "estimated_amount": 1150.0,
+      "loss_location": "Oak Blvd, Tampa, FL"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "review"
+  },
+  {
+    "id": "c11_high_value_commercial",
+    "file": "c11_high_value_commercial.pdf",
+    "format": "form_pdf",
+    "expect": {
+      "policy_number": "CP-80156472",
+      "line_of_business": "property",
+      "loss_date": "2026-11-16",
+      "loss_cause": "fire",
+      "insured_name": "Harbor Street Bakery LLC",
+      "reporter_name": "Nadia Flores",
+      "other_parties": [],
+      "police_report_number": "BCFD-26-77031",
+      "injuries": false,
+      "estimated_amount": 42500.0,
+      "loss_location": "410 Harbor St, Baltimore, MD 21230"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "review"
+  },
+  {
+    "id": "c12_not_a_claim",
+    "file": "c12_not_a_claim.eml",
+    "format": "email",
+    "expect": {},
+    "expect_kind": "not_claim",
+    "expect_decision": "review"
+  },
+  {
+    "id": "c13_vandalism_png_scan",
+    "file": "c13_vandalism_png_scan.png",
+    "format": "form_scan_png",
+    "expect": {
+      "policy_number": "PA-62284071",
+      "line_of_business": "auto",
+      "loss_date": "2026-11-22",
+      "loss_cause": "vandalism",
+      "insured_name": "Oliver Grant",
+      "reporter_name": "Oliver Grant",
+      "other_parties": [],
+      "police_report_number": "SPD-26-302118",
+      "injuries": false,
+      "estimated_amount": 675.0,
+      "loss_location": "Public garage level 3, 55 Pine St, Seattle, WA"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
+  },
+  {
+    "id": "c14_commercial_water_email",
+    "file": "c14_commercial_water_email.eml",
+    "format": "email",
+    "expect": {
+      "policy_number": "CP-81903345",
+      "line_of_business": "property",
+      "loss_date": "2026-11-19",
+      "loss_cause": "water_damage",
+      "insured_name": "Lakeside Dental Group",
+      "reporter_name": "Helen Ortiz",
+      "other_parties": [],
+      "police_report_number": null,
+      "injuries": false,
+      "estimated_amount": 7250.0,
+      "loss_location": "Suite 210, 900 Lakeshore Dr, Chicago, IL 60611"
+    },
+    "expect_kind": "fnol",
+    "expect_decision": "auto_push"
+  }
+]

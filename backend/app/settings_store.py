@@ -1,0 +1,57 @@
+"""Runtime settings editable from the UI (stored in app_settings), with env defaults."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from sqlalchemy.orm import Session
+
+from .config import get_settings
+from .models import AppSetting
+
+EDITABLE = {
+    "llm_provider": str,
+    "llm_model": str,
+    "confidence_threshold": float,
+    "auto_push": bool,
+    "policy_number_regex": str,
+    "max_auto_push_amount": float,
+    "max_loss_age_days": int,
+    "review_if_injuries": bool,
+}
+
+
+def defaults() -> dict[str, Any]:
+    s = get_settings()
+    return {
+        "llm_provider": s.llm_provider,
+        "llm_model": s.llm_model,
+        "confidence_threshold": s.confidence_threshold,
+        "auto_push": s.auto_push,
+        "policy_number_regex": r"^[A-Z]{2,4}-\d{6,10}$",
+        "max_auto_push_amount": 25000.0,
+        "max_loss_age_days": 365,
+        "review_if_injuries": True,
+    }
+
+
+def get_runtime(db: Session) -> dict[str, Any]:
+    out = defaults()
+    for row in db.query(AppSetting).all():
+        if row.key in EDITABLE:
+            out[row.key] = row.value
+    return out
+
+
+def update_runtime(db: Session, changes: dict[str, Any]) -> dict[str, Any]:
+    for k, v in changes.items():
+        if k not in EDITABLE or v is None:
+            continue
+        v = EDITABLE[k](v)
+        row = db.get(AppSetting, k)
+        if row:
+            row.value = v
+        else:
+            db.add(AppSetting(key=k, value=v))
+    db.flush()
+    return get_runtime(db)
